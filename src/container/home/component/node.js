@@ -1,11 +1,17 @@
 import * as d3 from 'd3'
 
+let cid = 0
+
 class Node {
-  constructor({ x, y, size, $viewport }) {
-    this.$viewport = $viewport
+  constructor({ editor, x, y, size, $viewport }) {
+    this.editor = editor
     this.size = size
     this.x = x
     this.y = y
+    this.id = (cid++) + ''
+
+    this.sourceNode = null
+    this.targetNodes = []
 
     this.initElements()
     this.bindEvents()
@@ -15,13 +21,14 @@ class Node {
 
   initElements() {
     const {
-      $viewport,
+      editor,
       size,
       x,
-      y
+      y,
+      id
     } = this
 
-    const $fo = this.$fo = $viewport.append('foreignObject')
+    const $fo = this.$fo = this.editor.$nodes.append('foreignObject')
       .attr('width', size.width)
       .attr('height', size.height)
       .attr('x', x)
@@ -29,15 +36,19 @@ class Node {
 
     const div = $fo.append('xhtml:div')
       .classed('editor-node', true)
+      .attr('data-id', id)
 
     div.append('div')
       .classed('editor-node-content', true)
+      .attr('data-id', id)
 
     div.append('div')
       .classed('editor-node-entrance', true)
+      .attr('data-id', id)
 
     div.append('div')
       .classed('editor-node-export', true)
+      .attr('data-id', id)
   }
 
   bindEvents() {
@@ -49,18 +60,53 @@ class Node {
 
   // 拖拽连线
   initDragLine() {
-    const $fo = this.$fo
+    const  {
+      $fo,
+      editor,
+      size,
+      id
+    } = this
     const $dragger = this.$fo.select('.editor-node-export')
+
+    let $path = null
 
     const drag = d3.drag()
       .on('start', function() {
+        $path = editor.$lines
+          .append('path')
+          .style('fill', 'none')
+          .style('stroke', '#666')
+          .style('marker-end', 'url(#line-triangle)')
       })
-      .on('drag', function() {
-        console.log(d3.event)
+      .on('drag', () => {
+        const startX = this.x
+        const startY = this.y + size.height / 2
+        const endX = d3.event.x
+        const endY = d3.event.y
+        const p = d3.path()
+
+        p.moveTo(startX, startY)
+        p.bezierCurveTo(
+          endX + (startX - endX) / 2,
+          startY,
+          endX,
+          endY + (startY - endY) / 2,
+          endX,
+          endY
+        )
+
+        $path.attr('d', p.toString())
       })
       .on('end', function() {
+        const target = d3.event.sourceEvent.target
+
+        if (target && target.nodeName.toLowerCase() === 'div' && target.getAttribute('data-id')) {
+          editor.addConnect(id, target.getAttribute('data-id'))
+        }
+
+        $path.remove()
       })
-      .container(this.$viewport.node())
+      .container(editor.$nodes.node())
 
     $dragger.call(drag)
   }
