@@ -1,0 +1,33 @@
+{
+  "presets": [
+    [
+      "env",
+      {
+        "targets": {
+          "browsers": ["last 2 versions"]
+        },
+        "modules": false
+      }
+    ],
+    "react"
+  ],
+  "env": {
+    "dev": {
+      "plugins": [
+        "transform-decorators-legacy",
+        "transform-class-properties",
+        "transform-object-rest-spread",
+        ["import", { "libraryName": "antd" }],
+        "react-hot-loader/babel"
+      ]
+    },
+    "production": {
+      "plugins": [
+        "transform-decorators-legacy",
+        "transform-class-properties",
+        "transform-object-rest-spread",
+        ["import", { "libraryName": "antd" }]
+      ]
+    }
+  }
+}

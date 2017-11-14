@@ -1,0 +1,73 @@
+:global {
+
+  .dragging {
+    // crosshair
+    cursor: move;
+  }
+
+  .editor-toolbar {
+    margin-bottom: 20px;
+  }
+
+  .editor-container {
+    // width: 100%;
+    width: 800px;
+    height: 500px;
+    overflow: auto;
+    transform: translateZ(0);
+  }
+
+  .editor-svg {
+    background: #fff;
+  }
+
+  .editor-node-placeholder,
+  .editor-node {
+    width: 150px;
+    height: 30px;
+    transform: translate(-50%, -50%);
+    border-radius: 15px;
+  }
+
+  .editor-node-placeholder {
+    position: absolute;
+    background: rgba(95, 92, 196, 0.2);
+    cursor: move;
+  }
+
+  .editor-node {
+    position: relative;
+    background: rgba(95, 92, 196, 0.6);
+  }
+
+  .editor-node-content {
+    height: 100%;
+  }
+
+  .editor-node-entrance,
+  .editor-node-export {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    border: 1px solid #666;
+    border-radius: 50%;
+
+    &:hover {
+      border-color: #000;
+    }
+  }
+
+  .editor-node-entrance {
+    left: 50%;
+    top: 0;
+    transform: translate(-50%, -50%);
+  }
+
+  .editor-node-export {
+    left: 50%;
+    bottom: 0;
+    transform: translate(-50%, 50%);
+    cursor: crosshair;
+  }
+}

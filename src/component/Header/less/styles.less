@@ -1,0 +1,14 @@
+@import '../../../less/variables.less';
+@import '../../../less/fn.less';
+
+.header {
+  position: relative;
+  height: 70px;
+  background: @main-color;
+}
+.logo {
+  .hide-text();
+  width: 110px + 24px * 2;
+  height: 70px;
+  .image-set('../images/logo');
+}

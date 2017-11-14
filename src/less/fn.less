@@ -1,0 +1,25 @@
+.image-set(@url, @suffix: 'png') {
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-image: url("@{url}.@{suffix}");
+  background-image: image-set(url("@{url}.@{suffix}") 1x, url("@{url}@2.@{suffix}") 2x);
+}
+
+.square(@size) {
+  width: @size;
+  height: @size;
+}
+
+.center() {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.hide-text() {
+  display: block;
+  overflow: hidden;
+  text-indent: 100%;
+  white-space: nowrap;
+}
