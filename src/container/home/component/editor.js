@@ -13,6 +13,7 @@ class Editor {
     this.canvasSize = canvasSize
 
     this.initElements()
+    this.bindEvents()
   }
 
   initElements() {
@@ -37,6 +38,7 @@ class Editor {
       .append('path')
       .attr('d', 'M 0 0 5 5 0 10 Z')
       .style('fill', '#333')
+      .style('stroke-width', 1)
 
     this.$viewport = $svg
       .append('g')
@@ -44,6 +46,13 @@ class Editor {
 
     this.$nodes = this.$viewport.append('g').classed('editor-nodes', true)
     this.$lines = this.$viewport.append('g').classed('editor-lines', true)
+  }
+
+  bindEvents() {
+    // 右键菜单
+    this.$svg.on('contextmenu', function() {
+      d3.event.preventDefault()
+    })
   }
 
   /**
@@ -58,34 +67,6 @@ class Editor {
     })
 
     this.nodes.push(node)
-  }
-
-  addConnect(sourceId, targetId) {
-    const source = this.getNodeById(sourceId)
-    const target = this.getNodeById(targetId)
-
-    const startX = source.x
-    const startY = source.y + source.size.height / 2
-    const endX = target.x
-    const endY = target.y - target.size.height / 2
-    const p = d3.path()
-
-    p.moveTo(startX, startY)
-    p.bezierCurveTo(
-      endX + (startX - endX)/2,
-      startY,
-      endX,
-      endY + (startY - endY)/2,
-      endX,
-      endY
-    )
-
-    this.$lines
-      .append('path')
-      .attr('d', p.toString())
-      .style('fill', 'none')
-      .style('stroke', '#666')
-      .style('marker-end', 'url(#line-triangle)')
   }
 
   getNodeById(id) {

@@ -63,10 +63,9 @@ class Node {
     const  {
       $fo,
       editor,
-      size,
-      id
+      size
     } = this
-    const $dragger = this.$fo.select('.editor-node-export')
+    const $dragger = $fo.select('.editor-node-export')
 
     let $path = null
 
@@ -97,11 +96,12 @@ class Node {
 
         $path.attr('d', p.toString())
       })
-      .on('end', function() {
+      .on('end', () => {
         const target = d3.event.sourceEvent.target
+        const id = target.getAttribute('data-id')
 
-        if (target && target.nodeName.toLowerCase() === 'div' && target.getAttribute('data-id')) {
-          editor.addConnect(id, target.getAttribute('data-id'))
+        if (target && target.nodeName.toLowerCase() === 'div' && id) {
+          this.addConnect(id)
         }
 
         $path.remove()
@@ -109,6 +109,69 @@ class Node {
       .container(editor.$nodes.node())
 
     $dragger.call(drag)
+  }
+
+  /**
+   * 关联两个节点
+   */
+  addConnect(targetId) {
+    const target = this.editor.getNodeById(targetId)
+    if (!target || (target.sourceNode && target.sourceNode.node === this)) {
+      return
+    }
+
+    const $line = this.editor.$lines
+      .append('path')
+      .attr('d', this.getLinePath(this, target))
+      .style('fill', 'none')
+      .style('stroke', '#666')
+      .style('marker-end', 'url(#line-triangle)')
+
+    target.sourceNode = {
+      node: this,
+      $line
+    }
+
+    this.targetNodes.push({
+      node: target,
+      $line
+    })
+  }
+
+  /**
+   * 两个节点之间的连线路径
+   */
+  getLinePath(sourceNode, targetNode) {
+    const startX = sourceNode.x
+    const startY = sourceNode.y + sourceNode.size.height / 2
+    const endX = targetNode.x
+    const endY = targetNode.y - targetNode.size.height / 2
+    const p = d3.path()
+
+    p.moveTo(startX, startY)
+    p.bezierCurveTo(
+      endX + (startX - endX)/2,
+      startY,
+      endX,
+      endY + (startY - endY)/2,
+      endX,
+      endY
+    )
+
+    return p.toString()
+  }
+
+  /**
+   * 更新连线
+   */
+  updateLines() {
+    this.targetNodes.forEach(item => {
+      item.$line.attr('d', this.getLinePath(this, item.node))
+    })
+
+    if (this.sourceNode) {
+      this.sourceNode.$line.attr('d', this.getLinePath(this.sourceNode.node, this))
+    }
   }
 
   // 拖拽内容
@@ -128,6 +191,7 @@ class Node {
 
           this.x = event.x
           this.y = event.y
+          this.updateLines()
         }
       })
       .on('end', function() {

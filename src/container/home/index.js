@@ -1,9 +1,10 @@
 import { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import { observer, inject } from "mobx-react"
+import { autorun } from 'mobx'
 import CSSModules from 'react-css-modules'
 import * as d3 from 'd3'
-import { Button } from 'antd'
+import { Button, message } from 'antd'
 
 import Editor from './component/editor'
 
@@ -34,6 +35,7 @@ class Home extends Component {
       width: 120,
       height: 30
     }
+
   }
 
   /**
