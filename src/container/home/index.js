@@ -99,8 +99,8 @@ class Home extends Component {
     const $container = d3.select(this.container)
     const $svg = this.$svg = $container
       .insert('svg', ':first-child')
-      .attr('xmlns', 'http://www.w3.org/2000/svg')
-      .attr('xmlns:xlink', 'http://www.w3.org/1999/xlink')
+      .attr('xmlns', d3.namespaces.svg)
+      .attr('xmlns:xlink', d3.namespaces.xlink)
 
     const editor = this.editor = new Editor({
       width: this.canvasSize.width,
