@@ -195,8 +195,8 @@ class Editor {
       width,
       height,
       // 减去transform的偏移量
-      x: Math.floor(event.x / this.scale) + container.scrollLeft - width / 2,
-      y: Math.floor(event.y / this.scale) + container.scrollTop - height / 2
+      x: Math.floor((event.x + container.scrollLeft - width / 2) / this.scale),
+      y: Math.floor((event.y + container.scrollTop - height / 2) / this.scale)
     })
 
     this.nodes.push(node)

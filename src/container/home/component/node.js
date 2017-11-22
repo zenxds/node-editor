@@ -141,7 +141,10 @@ class Node {
    */
   addConnect(targetId) {
     const target = this.editor.getNodeById(targetId)
-    if (!target || (target.sourceNode === this)) {
+
+    // 不允许关联自身
+    // 树形结构，已经有sourceNode的不能继续关联
+    if (!target || target === this || target.sourceNode) {
       return
     }
 
