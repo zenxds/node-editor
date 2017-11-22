@@ -5,6 +5,7 @@ import { autorun } from 'mobx'
 import CSSModules from 'react-css-modules'
 import * as d3 from 'd3'
 import { Button, message } from 'antd'
+import { getParentUntil } from 'util'
 
 import Editor from './component/editor'
 
@@ -25,17 +26,11 @@ class Home extends Component {
       width: 2000,
       height: 2000
     }
-    // 视口大小
-    this.viewportSize = {
-      width: 800,
-      height: 500
-    }
     // 节点大小
     this.nodeSize = {
       width: 120,
       height: 30
     }
-
   }
 
   /**
@@ -77,7 +72,7 @@ class Home extends Component {
   }
 
   /**
-   * 拖拽画布时，改变scrollLeft和scrollTop
+   * 拖拽画布时，改变画布scrollLeft和scrollTop
    */
   dragContainer() {
     const container = this.container
@@ -96,32 +91,27 @@ class Home extends Component {
       .on('end', function() {
         $container.classed('dragging', false)
       })
-      .filter(() => {
-        // d3.event.button 0是左键
-        // 过滤掉拖拽连线的元素
-        if (/(editor-node-entrance|editor-node-export)/.test(d3.event.target.className) || d3.event.button) {
-          return false
-        }
-
-        return true
-      })
 
     $container.call(drag)
   }
 
   componentDidMount() {
     const $container = d3.select(this.container)
-    const $svg = this.$svg = $container.append('svg')
+    const $svg = this.$svg = $container
+      .insert('svg', ':first-child')
+      .attr('xmlns', 'http://www.w3.org/2000/svg')
+      .attr('xmlns:xlink', 'http://www.w3.org/1999/xlink')
 
     const editor = this.editor = new Editor({
-      canvasSize: this.canvasSize,
+      width: this.canvasSize.width,
+      height: this.canvasSize.height,
       nodeSize: this.nodeSize,
       $container,
       $svg
     })
 
     this.dragSource()
-    this.dragContainer()
+    // this.dragContainer()
   }
 
   componentDidCatch(err) {
@@ -138,11 +128,48 @@ class Home extends Component {
           <a ref={sourceNode => {
             this.sourceNode = sourceNode
           }}>拖拽节点</a>
+
+          <a onClick={() => {
+            this.editor.scaleUp()
+          }}>放大</a>
+          <a onClick={() => {
+            this.editor.scaleDown()
+          }}>缩小</a>
+
+          <a onClick={() => {
+            this.editor.scale = 1
+            this.editor.makeScale()
+          }}>原始大小</a>
         </div>
 
         <div className="editor-container" ref={container => {
           this.container = container
-        }} />
+        }}>
+          <ul className="contextmenu contextmenu-node">
+            <li><a onClick={(e) => {
+              const menu = getParentUntil(e.target, 'contextmenu')
+              const selectNodes = this.editor.getSelectNodes()
+              const nodes = selectNodes.length ? selectNodes : [this.editor.getNodeById(menu.dataset.id)]
+
+              nodes.forEach(node => {
+                node.destroy()
+              })
+            }}>删除节点</a></li>
+          </ul>
+
+          <ul className="contextmenu contextmenu-line">
+            <li><a onClick={(e) => {
+              const menu = getParentUntil(e.target, 'contextmenu')
+              const sourceNode = this.editor.getNodeById(menu.dataset.sid)
+
+              sourceNode.removeConnect(menu.dataset.tid)
+            }}>删除连线</a></li>
+          </ul>
+
+          <ul className="contextmenu contextmenu-svg">
+            <li>svg菜单项</li>
+          </ul>
+        </div>
       </div>
     )
   }

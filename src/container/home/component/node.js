@@ -1,11 +1,17 @@
 import * as d3 from 'd3'
+import { getParentUntil, getTransform } from 'util'
 
 let cid = 0
 
+const lineWidthNormal = 1
+const lineWidthHover = 6
+
 class Node {
-  constructor({ editor, x, y, size, $viewport }) {
+
+  constructor({ editor, x, y, width, height, $viewport }) {
     this.editor = editor
-    this.size = size
+    this.width = width
+    this.height = height
     this.x = x
     this.y = y
     this.id = (cid++) + ''
@@ -22,50 +28,65 @@ class Node {
   initElements() {
     const {
       editor,
-      size,
+      width,
+      height,
       x,
       y,
       id
     } = this
 
-    const $fo = this.$fo = this.editor.$nodes.append('foreignObject')
-      .attr('width', size.width)
-      .attr('height', size.height)
-      .attr('x', x)
-      .attr('y', y)
-
-    const div = $fo.append('xhtml:div')
+    const $node = this.$node = this.editor.$nodes
+      .append('g')
       .classed('editor-node', true)
       .attr('data-id', id)
+      .attr('transform', `translate(${x} ${y})`)
 
-    div.append('div')
+    $node.append('rect')
+      .attr('width', width)
+      .attr('height', height)
+      .attr('rx', 15)
+      .attr('ry', 15)
       .classed('editor-node-content', true)
-      .attr('data-id', id)
 
-    div.append('div')
+    $node.append('circle')
+      .attr('cx', width / 2)
+      .attr('cy', 0)
+      .attr('r', 5)
       .classed('editor-node-entrance', true)
-      .attr('data-id', id)
 
-    div.append('div')
+    $node.append('circle')
+      .attr('cx', width / 2)
+      .attr('cy', height)
+      .attr('r', 5)
       .classed('editor-node-export', true)
-      .attr('data-id', id)
   }
 
   bindEvents() {
-    // 右键菜单
-    this.$fo.on('contextmenu', function() {
-      d3.event.preventDefault()
+    // 阻止拖拽的冒泡
+    this.$node.on('mousedown', function() {
+      d3.event.stopPropagation()
+    })
+  }
+
+  bindLineEvents($line) {
+    $line.on('mousedown', function() {
+      d3.event.stopPropagation()
+    }).on('mouseenter', () => {
+      $line.style('stroke-width', lineWidthHover)
+    }).on('mouseleave', () => {
+      $line.style('stroke-width', lineWidthNormal)
     })
   }
 
   // 拖拽连线
   initDragLine() {
     const  {
-      $fo,
+      $node,
       editor,
-      size
+      width,
+      height
     } = this
-    const $dragger = $fo.select('.editor-node-export')
+    const $dragger = $node.select('.editor-node-export')
 
     let $path = null
 
@@ -75,13 +96,14 @@ class Node {
           .append('path')
           .style('fill', 'none')
           .style('stroke', '#666')
+          .style('stroke-width', lineWidthNormal)
           .style('marker-end', 'url(#line-triangle)')
       })
       .on('drag', () => {
-        const startX = this.x
-        const startY = this.y + size.height / 2
-        const endX = d3.event.x
-        const endY = d3.event.y
+        const startX = this.x + width / 2
+        const startY = this.y + height
+        const endX = Math.floor(d3.event.x / editor.scale)
+        const endY = Math.floor(d3.event.y / editor.scale)
         const p = d3.path()
 
         p.moveTo(startX, startY)
@@ -97,16 +119,19 @@ class Node {
         $path.attr('d', p.toString())
       })
       .on('end', () => {
-        const target = d3.event.sourceEvent.target
-        const id = target.getAttribute('data-id')
+        $path.remove()
 
-        if (target && target.nodeName.toLowerCase() === 'div' && id) {
-          this.addConnect(id)
+        const target = getParentUntil(d3.event.sourceEvent.target, 'editor-node')
+        if (!target) {
+          return
         }
 
-        $path.remove()
+        const id = target.dataset.id
+        if (id) {
+          this.addConnect(id)
+        }
       })
-      .container(editor.$nodes.node())
+      .container(editor.$svg.node())
 
     $dragger.call(drag)
   }
@@ -116,36 +141,37 @@ class Node {
    */
   addConnect(targetId) {
     const target = this.editor.getNodeById(targetId)
-    if (!target || (target.sourceNode && target.sourceNode.node === this)) {
+    if (!target || (target.sourceNode === this)) {
       return
     }
 
     const $line = this.editor.$lines
       .append('path')
+      .classed('editor-line', true)
+      .attr('id', `editor-line-${this.id}-${targetId}`)
+      .attr('data-sid', this.id)
+      .attr('data-tid', targetId)
       .attr('d', this.getLinePath(this, target))
       .style('fill', 'none')
+      .style('stroke-width', lineWidthNormal)
       .style('stroke', '#666')
       .style('marker-end', 'url(#line-triangle)')
 
-    target.sourceNode = {
-      node: this,
-      $line
-    }
+    this.bindLineEvents($line)
 
-    this.targetNodes.push({
-      node: target,
-      $line
-    })
+    target.sourceNode = this
+    this.targetNodes.push(target)
   }
 
   /**
    * 两个节点之间的连线路径
    */
   getLinePath(sourceNode, targetNode) {
-    const startX = sourceNode.x
-    const startY = sourceNode.y + sourceNode.size.height / 2
-    const endX = targetNode.x
-    const endY = targetNode.y - targetNode.size.height / 2
+    const startX = sourceNode.x + sourceNode.width / 2
+    const startY = sourceNode.y + sourceNode.height
+    const endX = targetNode.x + targetNode.width / 2
+    const endY = targetNode.y
+
     const p = d3.path()
 
     p.moveTo(startX, startY)
@@ -161,45 +187,95 @@ class Node {
     return p.toString()
   }
 
+  getLine(sid, tid) {
+    return d3.select(`#editor-line-${sid}-${tid}`)
+  }
+
   /**
    * 更新连线
    */
   updateLines() {
-    this.targetNodes.forEach(item => {
-      item.$line.attr('d', this.getLinePath(this, item.node))
+    this.targetNodes.forEach(node => {
+      const $line = this.getLine(this.id, node.id)
+      $line.attr('d', this.getLinePath(this, node))
     })
 
     if (this.sourceNode) {
-      this.sourceNode.$line.attr('d', this.getLinePath(this.sourceNode.node, this))
+      const $line = this.getLine(this.sourceNode.id, this.id)
+      $line.attr('d', this.getLinePath(this.sourceNode, this))
     }
   }
 
   // 拖拽内容
   initDrag() {
-    const $fo = this.$fo
-    const $dragger = this.$fo.select('.editor-node-content')
+    const $dragger = this.$node.select('.editor-node-content')
 
     const drag = d3.drag()
-      .on('start', function() {
+      .on('start', () => {
         $dragger.classed('dragging', true)
+
+        this.editor.hideContextmenu()
       })
       .on('drag', () => {
         const event = d3.event
+        const selectNodes = this.editor.getSelectNodes()
+        const nodes = selectNodes.length ? selectNodes : [this]
 
         if (event.x >= 0 && event.y >= 0) {
-          $fo.attr('x', event.x).attr('y', event.y)
+          nodes.forEach(node => {
+            const [x, y] = getTransform(node.$node)
+            node.$node.attr('transform', `translate(${x + event.dx} ${y + event.dy})`)
 
-          this.x = event.x
-          this.y = event.y
-          this.updateLines()
+            node.x = x + event.dx
+            node.y = y + event.dy
+            node.updateLines()
+          })
         }
       })
       .on('end', function() {
         $dragger.classed('dragging', false)
       })
-      .container($fo.node())
+      .container(this.editor.$svg.node())
 
     $dragger.call(drag)
+  }
+
+  removeConnect(targetId) {
+    const target = this.editor.getNodeById(targetId)
+    if (!target) {
+      return
+    }
+
+    const $line = this.getLine(this.id, targetId)
+
+    $line.remove()
+    target.sourceNode = null
+
+    const index = this.targetNodes.indexOf(target)
+    if (index > -1) {
+      this.targetNodes.splice(index, 1)
+    }
+  }
+
+  destroy() {
+    if (this.sourceNode) {
+      this.sourceNode.removeConnect(this.id)
+      this.sourceNode = null
+    }
+
+    const targetIds = this.targetNodes.map(node => {
+      return node.id
+    })
+    targetIds.forEach(id => {
+      this.removeConnect(id)
+    })
+
+    const index = this.editor.nodes.indexOf(this)
+
+    this.$node.remove()
+    if (index > -1) {
+      this.editor.nodes.splice(index, 1)
+    }
   }
 }
 

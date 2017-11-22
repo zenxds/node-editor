@@ -7,6 +7,10 @@
 
   .editor-toolbar {
     margin-bottom: 20px;
+
+    a {
+      margin-right: 10px;
+    }
   }
 
   .editor-container {
@@ -21,53 +25,85 @@
     background: #fff;
   }
 
-  .editor-node-placeholder,
-  .editor-node {
-    width: 150px;
-    height: 30px;
-    transform: translate(-50%, -50%);
-    border-radius: 15px;
-  }
-
   .editor-node-placeholder {
     position: absolute;
+    width: 120px;
+    height: 30px;
+    border-radius: 15px;
+    transform: translate(-50%, -50%);
     background: rgba(95, 92, 196, 0.2);
     cursor: move;
   }
 
   .editor-node {
-    position: relative;
-    background: rgba(95, 92, 196, 0.6);
+    fill: rgba(95, 92, 196, 0.6);
   }
 
-  .editor-node-content {
-    height: 100%;
+  .editor-node.selected {
+    fill: rgba(95, 92, 196, 1);
   }
+
+  // .editor-node-content {
+  //   height: 100%;
+  // }
 
   .editor-node-entrance,
   .editor-node-export {
-    position: absolute;
-    width: 10px;
-    height: 10px;
-    background: #fff;
-    border: 1px solid #666;
-    border-radius: 50%;
+    stroke: #666;
+    stroke-width: 1;
+    fill: #fff;
 
     &:hover {
-      border-color: #000;
+      stroke: #000;
     }
   }
 
-  .editor-node-entrance {
-    left: 50%;
-    top: 0;
-    transform: translate(-50%, -50%);
+  .editor-node-export {
+    cursor: crosshair;
   }
 
-  .editor-node-export {
-    left: 50%;
-    bottom: 0;
-    transform: translate(-50%, 50%);
-    cursor: crosshair;
+  /**
+   * 选区
+   */
+  .editor-selection {
+    position: absolute;
+    border: 1px dashed #0099FF;
+    background-color: #C3D5ED;
+    opacity: 0.6;
+  }
+
+  /**
+   * 右键菜单
+   */
+  .contextmenu {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 0;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.2);
+
+    li {
+      padding: 10px;
+      min-width: 100px;
+      color: rgba(0,0,0,.65);
+      white-space: nowrap;
+
+      &:hover {
+        background: #ecf6fd;
+      }
+
+      &:first-child {
+        border-radius: 4px 4px 0 0;
+      }
+      &:last-child {
+        border-radius: 0 0 4px 4px;
+      }
+    }
+
+    a {
+      display: block;
+    }
   }
 }
