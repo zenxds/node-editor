@@ -123,10 +123,10 @@ class Home extends Component {
             this.sourceNode = sourceNode
           }}>拖拽节点</a>
 
-          <a onClick={event => {
+          <a onClick={() => {
             this.editor.scaleUp()
           }}>放大</a>
-          <a onClick={event => {
+          <a onClick={() => {
             this.editor.scaleDown()
           }}>缩小</a>
 

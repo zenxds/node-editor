@@ -86,7 +86,9 @@ class Editor {
       // 否则隐藏menu
       this.hideContextmenu()
     }).on('click', () => {
-      this.onBlur()
+      if (!isInsideElement(d3.event, '.editor-toolbar')) {
+        this.onBlur()
+      }
     })
 
     d3.select(window).on('resize', () => {
