@@ -164,6 +164,8 @@ class Node {
 
     target.sourceNode = this
     this.targetNodes.push(target)
+
+    target.$node.select('.editor-node-entrance').classed('hidden', true)
   }
 
   /**
@@ -257,6 +259,7 @@ class Node {
 
     $line.remove()
     target.sourceNode = null
+    target.$node.select('.editor-node-entrance').classed('hidden', false)
 
     const index = this.targetNodes.indexOf(target)
     if (index > -1) {
