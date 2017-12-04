@@ -3,16 +3,15 @@ import Node from './node'
 import * as d3 from 'd3'
 import {
   getElementLeft,
-  getElementTop
-} from 'util/offset'
-import { isInsideElement, getParentUntil } from 'util'
+  getElementTop,
+  isInsideElement,
+  getParentUntil
+} from 'util/editor'
 
 class Editor {
-  constructor({ $container, $svg, width, height, nodeSize }) {
+  constructor({ $container, width, height, nodeSize }) {
 
     this.$container = $container
-    this.$svg = $svg
-
     this.width = width
     this.height = height
     this.scale = 1
@@ -26,17 +25,22 @@ class Editor {
 
   initElements() {
     const {
-      $svg,
+      $container,
       width,
       height
     } = this
+
+    const $svg = this.$svg = $container
+      .insert('svg', ':first-child')
+      .attr('xmlns', d3.namespaces.svg)
+      .attr('xmlns:xlink', d3.namespaces.xlink)
 
     $svg
       .attr('width', width)
       .attr('height', height)
       .classed('editor-svg', true)
 
-    // 连线三角形
+    // 连线的三角形
     $svg
       .append('defs')
       .append('marker')
@@ -58,6 +62,8 @@ class Editor {
     // 线在下面
     this.$lines = this.$viewport.append('g').classed('editor-lines', true)
     this.$nodes = this.$viewport.append('g').classed('editor-nodes', true)
+
+    this.$menus = d3.selectAll('.contextmenu')
   }
 
   bindEvents() {
@@ -69,9 +75,10 @@ class Editor {
       const types = ['node', 'line', 'svg']
 
       for (let i = 0; i < types.length; i++) {
-        if (isInsideElement(event, 'editor-' + types[i])) {
-          event.preventDefault()
+        if (isInsideElement(event, '.editor-' + types[i])) {
           this.showContextmenu(types[i], event)
+
+          event.preventDefault()
           return
         }
       }
@@ -97,33 +104,33 @@ class Editor {
 
     const drag = d3.drag()
       .on('start', () => {
-        const { pageX, pageY } = d3.event.sourceEvent
-
         startEvent = d3.event
+
         $placeholder = d3.select('body')
           .append('div')
           .classed('editor-selection', true)
-          .style('left', pageX + 'px')
-          .style('top', pageY + 'px')
 
         this.onBlur()
       })
       .on('drag', () => {
-        const sourceEvent = d3.event.sourceEvent
+        const endEvent = d3.event
+        const startSourceEvent = startEvent.sourceEvent
+        const endSourceEvent = endEvent.sourceEvent
         const scale = this.scale
 
+        // 选框
         $placeholder
-          .style('left', Math.min(startEvent.sourceEvent.pageX, sourceEvent.pageX) + 'px')
-          .style('top', Math.min(startEvent.sourceEvent.pageY, sourceEvent.pageY) + 'px')
-          .style('width', Math.abs(startEvent.sourceEvent.pageX - sourceEvent.pageX) + 'px')
-          .style('height', Math.abs(startEvent.sourceEvent.pageY - sourceEvent.pageY) + 'px')
+          .style('left', Math.min(startSourceEvent.pageX, endSourceEvent.pageX) + 'px')
+          .style('top', Math.min(startSourceEvent.pageY, endSourceEvent.pageY) + 'px')
+          .style('width', Math.abs(startSourceEvent.pageX - endSourceEvent.pageX) + 'px')
+          .style('height', Math.abs(startSourceEvent.pageY - endSourceEvent.pageY) + 'px')
 
-        const endEvent = d3.event
         const x = Math.min(startEvent.x, endEvent.x) + container.scrollLeft
         const y = Math.min(startEvent.y, endEvent.y) + container.scrollTop
         const width = Math.abs(startEvent.x - endEvent.x)
         const height = Math.abs(startEvent.y - endEvent.y)
 
+        // 判断节点是否被框选住
         this.nodes.forEach(node => {
           const yInSelection = node.y * scale <= y + height && node.y * scale + node.height * scale >= y
           const xInSelection = node.x * scale <= x + width && node.x * scale + node.width * scale >= x
@@ -152,9 +159,9 @@ class Editor {
     const container = this.$container.node()
     const offsetX = getElementLeft(container)
     const offsetY = getElementTop(container)
-    const dataset = getParentUntil(event.target, `editor-${type}`).dataset
+    const dataset = getParentUntil(event.target, `.editor-${type}`).dataset
 
-    const $menu = d3.selectAll('.contextmenu')
+    const $menu = this.$menus
       .style('display', 'none')
       .filter(`.contextmenu-${type}`)
       .style('display', 'block')
@@ -171,7 +178,7 @@ class Editor {
 
   // 隐藏menu
   hideContextmenu() {
-    d3.selectAll('.contextmenu').style('display', 'none')
+    this.$menus.style('display', 'none')
   }
 
   onBlur() {
@@ -194,7 +201,6 @@ class Editor {
       editor: this,
       width,
       height,
-      // 减去transform的偏移量
       x: Math.floor((event.x + container.scrollLeft - width / 2) / this.scale),
       y: Math.floor((event.y + container.scrollTop - height / 2) / this.scale)
     })
@@ -206,17 +212,27 @@ class Editor {
     return this.nodes.find(item => item.id === id)
   }
 
+  /**
+   * 获取被框选的node
+   */
   getSelectNodes() {
     return this.$svg.selectAll('.editor-node.selected').nodes().map(item => {
       return this.getNodeById(item.dataset.id)
     })
   }
 
+  /**
+   * 放大画布
+   */
   scaleUp() {
     this.scale = Number((this.scale + 0.1).toFixed(1))
     this.$viewport.attr('transform', `scale(${this.scale})`)
     this.makeScale()
   }
+
+  /**
+   * 缩小画布
+   */
   scaleDown() {
     if (this.scale <= 0.5) {
       return

@@ -1,11 +1,10 @@
 import { Component } from 'react'
 import { withRouter } from 'react-router-dom'
-import { observer, inject } from "mobx-react"
-import { autorun } from 'mobx'
 import CSSModules from 'react-css-modules'
+import { observer, inject } from "mobx-react"
 import * as d3 from 'd3'
 import { Button, message } from 'antd'
-import { getParentUntil } from 'util'
+import { getParentUntil } from 'util/editor'
 
 import Editor from './component/editor'
 
@@ -97,17 +96,12 @@ class Home extends Component {
 
   componentDidMount() {
     const $container = d3.select(this.container)
-    const $svg = this.$svg = $container
-      .insert('svg', ':first-child')
-      .attr('xmlns', d3.namespaces.svg)
-      .attr('xmlns:xlink', d3.namespaces.xlink)
 
     const editor = this.editor = new Editor({
       width: this.canvasSize.width,
       height: this.canvasSize.height,
       nodeSize: this.nodeSize,
-      $container,
-      $svg
+      $container
     })
 
     this.dragSource()
@@ -129,10 +123,10 @@ class Home extends Component {
             this.sourceNode = sourceNode
           }}>拖拽节点</a>
 
-          <a onClick={() => {
+          <a onClick={event => {
             this.editor.scaleUp()
           }}>放大</a>
-          <a onClick={() => {
+          <a onClick={event => {
             this.editor.scaleDown()
           }}>缩小</a>
 
@@ -147,7 +141,7 @@ class Home extends Component {
         }}>
           <ul className="contextmenu contextmenu-node">
             <li><a onClick={(e) => {
-              const menu = getParentUntil(e.target, 'contextmenu')
+              const menu = getParentUntil(e.target, '.contextmenu')
               const selectNodes = this.editor.getSelectNodes()
               const nodes = selectNodes.length ? selectNodes : [this.editor.getNodeById(menu.dataset.id)]
 
@@ -159,7 +153,7 @@ class Home extends Component {
 
           <ul className="contextmenu contextmenu-line">
             <li><a onClick={(e) => {
-              const menu = getParentUntil(e.target, 'contextmenu')
+              const menu = getParentUntil(e.target, '.contextmenu')
               const sourceNode = this.editor.getNodeById(menu.dataset.sid)
 
               sourceNode.removeConnect(menu.dataset.tid)

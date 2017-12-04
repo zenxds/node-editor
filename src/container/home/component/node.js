@@ -1,5 +1,5 @@
 import * as d3 from 'd3'
-import { getParentUntil, getTransform } from 'util'
+import { getParentUntil, getTransform } from 'util/editor'
 
 let cid = 0
 
@@ -121,7 +121,7 @@ class Node {
       .on('end', () => {
         $path.remove()
 
-        const target = getParentUntil(d3.event.sourceEvent.target, 'editor-node')
+        const target = getParentUntil(d3.event.sourceEvent.target, '.editor-node')
         if (!target) {
           return
         }
@@ -220,6 +220,7 @@ class Node {
         this.editor.hideContextmenu()
       })
       .on('drag', () => {
+        // 可以拖拽多个节点
         const event = d3.event
         const selectNodes = this.editor.getSelectNodes()
         const nodes = selectNodes.length ? selectNodes : [this]
@@ -243,6 +244,9 @@ class Node {
     $dragger.call(drag)
   }
 
+  /**
+   * 删除source节点到target节点的关联
+   */
   removeConnect(targetId) {
     const target = this.editor.getNodeById(targetId)
     if (!target) {
@@ -274,11 +278,11 @@ class Node {
     })
 
     const index = this.editor.nodes.indexOf(this)
-
-    this.$node.remove()
     if (index > -1) {
       this.editor.nodes.splice(index, 1)
     }
+
+    this.$node.remove()
   }
 }
 
