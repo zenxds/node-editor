@@ -8,13 +8,17 @@ const lineWidthHover = 6
 
 class Node {
 
-  constructor({ editor, x, y, width, height, $viewport }) {
+  constructor({ editor, x, y, width, height, id, $viewport }) {
     this.editor = editor
     this.width = width
     this.height = height
     this.x = x
     this.y = y
-    this.id = (cid++) + ''
+    this.id = id || (cid++) + ''
+
+    if (id && parseInt(id, 10) + 1 > cid) {
+      cid = parseInt(id, 10) + 1
+    }
 
     this.sourceNode = null
     this.targetNodes = []
@@ -23,6 +27,16 @@ class Node {
     this.bindEvents()
     this.initDrag()
     this.initDragLine()
+  }
+
+  serialize() {
+    return {
+      x: this.x,
+      y: this.y,
+      id: this.id,
+      sourceNode: this.sourceNode && this.sourceNode.id,
+      targetNodes: this.targetNodes.map(node => node.id)
+    }
   }
 
   initElements() {
@@ -108,10 +122,10 @@ class Node {
 
         p.moveTo(startX, startY)
         p.bezierCurveTo(
-          endX + (startX - endX) / 2,
-          startY,
+          startX,
+          endY,
           endX,
-          endY + (startY - endY) / 2,
+          startY,
           endX,
           endY
         )
@@ -166,6 +180,7 @@ class Node {
     this.targetNodes.push(target)
 
     target.$node.select('.editor-node-entrance').classed('hidden', true)
+    this.editor.onChange()
   }
 
   /**
@@ -180,11 +195,12 @@ class Node {
     const p = d3.path()
 
     p.moveTo(startX, startY)
+
     p.bezierCurveTo(
-      endX + (startX - endX)/2,
-      startY,
+      startX,
+      endY,
       endX,
-      endY + (startY - endY)/2,
+      startY,
       endX,
       endY
     )
@@ -235,6 +251,7 @@ class Node {
             node.x = x + event.dx
             node.y = y + event.dy
             node.updateLines()
+            this.editor.onChange()
           })
         }
       })
@@ -265,6 +282,8 @@ class Node {
     if (index > -1) {
       this.targetNodes.splice(index, 1)
     }
+
+    this.editor.onChange()
   }
 
   destroy() {
@@ -286,6 +305,7 @@ class Node {
     }
 
     this.$node.remove()
+    this.editor.onChange()
   }
 }
 

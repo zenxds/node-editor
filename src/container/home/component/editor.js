@@ -9,8 +9,7 @@ import {
 } from 'util/editor'
 
 class Editor {
-  constructor({ $container, width, height, nodeSize }) {
-
+  constructor({ $container, width, height, nodeSize, data }) {
     this.$container = $container
     this.width = width
     this.height = height
@@ -21,6 +20,64 @@ class Editor {
     this.initElements()
     this.bindEvents()
     this.initDragSelection()
+    this.buildFromData(data)
+  }
+
+  /**
+   * 序列化数据
+   */
+  serialize() {
+    const container = this.$container.node()
+
+    return {
+      scrollLeft: container.scrollLeft,
+      scrollTop: container.scrollTop,
+      scale: this.scale,
+      nodes: this.nodes.map(node => node.serialize())
+    }
+  }
+
+  /**
+   * 从数据中构建editor
+   */
+  buildFromData(data) {
+    const container = this.$container.node()
+
+    if (data.scrollLeft) {
+      container.scrollLeft = data.scrollLeft
+    }
+    if (data.scrollTop) {
+      container.scrollTop = data.scrollTop
+    }
+
+    if (data.scale) {
+      this.makeScale(data.scale)
+    }
+
+    // 先添加节点，再处理连线信息，因为连线需要节点信息
+    if (data.nodes) {
+      data.nodes.forEach(d => {
+        this.addNodeFromData(d)
+      })
+
+      data.nodes.forEach(item => {
+        const node = this.getNodeById(item.id)
+        if (!node) {
+          return
+        }
+
+        item.targetNodes.forEach(tid => {
+          node.addConnect(tid)
+        })
+      })
+    }
+  }
+
+  /**
+   * 节点、连线、scale等信息发生变化
+   */
+  onChange() {
+    localStorage.setItem('editor-data', JSON.stringify(this.serialize()))
   }
 
   initElements() {
@@ -93,6 +150,10 @@ class Editor {
 
     d3.select(window).on('resize', () => {
       this.hideContextmenu()
+    })
+
+    this.$container.on('scroll', () => {
+      this.onChange()
     })
   }
 
@@ -208,6 +269,23 @@ class Editor {
     })
 
     this.nodes.push(node)
+    this.onChange()
+  }
+
+  addNodeFromData(data) {
+    const container = this.$container.node()
+    const { width, height } = this.nodeSize
+
+    const node = new Node({
+      editor: this,
+      width,
+      height,
+      id: data.id,
+      x: data.x,
+      y: data.y
+    })
+
+    this.nodes.push(node)
   }
 
   getNodeById(id) {
@@ -227,9 +305,7 @@ class Editor {
    * 放大画布
    */
   scaleUp() {
-    this.scale = Number((this.scale + 0.1).toFixed(1))
-    this.$viewport.attr('transform', `scale(${this.scale})`)
-    this.makeScale()
+    this.makeScale(Number((this.scale + 0.1).toFixed(1)))
   }
 
   /**
@@ -240,12 +316,17 @@ class Editor {
       return
     }
 
-    this.scale = Number((this.scale - 0.1).toFixed(1))
-    this.makeScale()
+    this.makeScale(Number((this.scale - 0.1).toFixed(1)))
   }
 
-  makeScale() {
-    this.$viewport.attr('transform', `scale(${this.scale})`)
+  makeScale(scale) {
+    if (scale === this.scale) {
+      return
+    }
+
+    this.scale = scale
+    this.$viewport.attr('transform', `scale(${scale})`)
+    this.onChange()
   }
 }
 

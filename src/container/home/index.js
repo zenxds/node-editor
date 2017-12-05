@@ -96,11 +96,22 @@ class Home extends Component {
 
   componentDidMount() {
     const $container = d3.select(this.container)
+    let editorData = {}
+
+    try {
+      const str = localStorage.getItem('editor-data')
+      if (str) {
+        editorData = JSON.parse(str)
+      }
+    } catch(e) {
+      console.log(e)
+    }
 
     const editor = this.editor = new Editor({
       width: this.canvasSize.width,
       height: this.canvasSize.height,
       nodeSize: this.nodeSize,
+      data: editorData,
       $container
     })
 
@@ -131,8 +142,7 @@ class Home extends Component {
           }}>缩小</a>
 
           <a onClick={() => {
-            this.editor.scale = 1
-            this.editor.makeScale()
+            this.editor.makeScale(1)
           }}>原始大小</a>
         </div>
 
