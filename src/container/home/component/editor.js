@@ -9,10 +9,11 @@ import {
 } from 'util/editor'
 
 class Editor {
-  constructor({ $container, width, height, nodeSize, data }) {
+  constructor({ $container, width, height, nodeSize, canvas, data }) {
     this.$container = $container
     this.width = width
     this.height = height
+    this.canvas = canvas
     this.scale = 1
     this.nodeSize = nodeSize
     this.nodes = []
@@ -84,15 +85,16 @@ class Editor {
     const {
       $container,
       width,
-      height
+      height,
+      canvas
     } = this
 
-    const $svg = this.$svg = $container
+    this.$nodes = canvas.main.append('div').classed('editor-nodes', true)
+
+    const $svg = this.$svg = canvas.svg
       .insert('svg', ':first-child')
       .attr('xmlns', d3.namespaces.svg)
       .attr('xmlns:xlink', d3.namespaces.xlink)
-
-    $svg
       .attr('width', width)
       .attr('height', height)
       .classed('editor-svg', true)
@@ -116,11 +118,8 @@ class Editor {
       .append('g')
       .classed('editor-viewport', true)
 
-    // 线在下面
     this.$lines = this.$viewport.append('g').classed('editor-lines', true)
-    this.$nodes = this.$viewport.append('g').classed('editor-nodes', true)
-
-    this.$menus = d3.selectAll('.contextmenu')
+    this.$menus = canvas.guide.selectAll('.contextmenu')
   }
 
   bindEvents() {
@@ -296,7 +295,7 @@ class Editor {
    * 获取被框选的node
    */
   getSelectNodes() {
-    return this.$svg.selectAll('.editor-node.selected').nodes().map(item => {
+    return this.canvas.main.selectAll('.editor-node.selected').nodes().map(item => {
       return this.getNodeById(item.dataset.id)
     })
   }
@@ -326,6 +325,7 @@ class Editor {
 
     this.scale = scale
     this.$viewport.attr('transform', `scale(${scale})`)
+    this.$nodes.style('transform', `scale(${scale})`)
     this.onChange()
   }
 }

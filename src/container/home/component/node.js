@@ -1,7 +1,5 @@
 import * as d3 from 'd3'
-import { getParentUntil, getTransform } from 'util/editor'
-
-let cid = 0
+import { getParentUntil } from 'util/editor'
 
 const lineWidthNormal = 1
 const lineWidthHover = 6
@@ -14,11 +12,7 @@ class Node {
     this.height = height
     this.x = x
     this.y = y
-    this.id = id || (cid++) + ''
-
-    if (id && parseInt(id, 10) + 1 > cid) {
-      cid = parseInt(id, 10) + 1
-    }
+    this.id = id || Math.random().toString(36).slice(2)
 
     this.sourceNode = null
     this.targetNodes = []
@@ -50,42 +44,27 @@ class Node {
     } = this
 
     const $node = this.$node = this.editor.$nodes
-      .append('g')
+      .append('div')
       .classed('editor-node', true)
       .attr('data-id', id)
-      .attr('transform', `translate(${x} ${y})`)
+      .style('left', `${x}px`)
+      .style('top', `${y}px`)
 
-    $node.append('rect')
-      .attr('width', width)
-      .attr('height', height)
-      .attr('rx', 15)
-      .attr('ry', 15)
+    $node.append('div')
       .classed('editor-node-content', true)
+      .text('节点')
 
-    $node.append('circle')
-      .attr('cx', width / 2)
-      .attr('cy', 0)
-      .attr('r', 5)
+    $node.append('div')
       .classed('editor-node-entrance', true)
 
-    $node.append('circle')
-      .attr('cx', width / 2)
-      .attr('cy', height)
-      .attr('r', 5)
+    $node.append('div')
       .classed('editor-node-export', true)
   }
 
-  bindEvents() {
-    // 阻止拖拽的冒泡
-    this.$node.on('mousedown', function() {
-      d3.event.stopPropagation()
-    })
-  }
+  bindEvents() {}
 
   bindLineEvents($line) {
-    $line.on('mousedown', function() {
-      d3.event.stopPropagation()
-    }).on('mouseenter', () => {
+    $line.on('mouseenter', () => {
       $line.style('stroke-width', lineWidthHover)
     }).on('mouseleave', () => {
       $line.style('stroke-width', lineWidthNormal)
@@ -245,12 +224,11 @@ class Node {
 
         if (event.x >= 0 && event.y >= 0) {
           nodes.forEach(node => {
-            const [x, y] = getTransform(node.$node)
-            node.$node.attr('transform', `translate(${x + event.dx} ${y + event.dy})`)
-
-            node.x = x + event.dx
-            node.y = y + event.dy
+            node.x += event.dx
+            node.y += event.dy
+            node.$node.style('top', `${node.y}px`).style('left', `${node.x}px`)
             node.updateLines()
+
             this.editor.onChange()
           })
         }

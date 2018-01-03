@@ -112,6 +112,11 @@ class Home extends Component {
       height: this.canvasSize.height,
       nodeSize: this.nodeSize,
       data: editorData,
+      canvas: {
+        svg: $container.select('.svg-canvas'),
+        main: $container.select('.main-canvas'),
+        guide: $container.select('.guide-canvas')
+      },
       $container
     })
 
@@ -149,30 +154,34 @@ class Home extends Component {
         <div className="editor-container" ref={container => {
           this.container = container
         }}>
-          <ul className="contextmenu contextmenu-node">
-            <li><a onClick={(e) => {
-              const menu = getParentUntil(e.target, '.contextmenu')
-              const selectNodes = this.editor.getSelectNodes()
-              const nodes = selectNodes.length ? selectNodes : [this.editor.getNodeById(menu.dataset.id)]
+          <div className="svg-canvas"></div>
+          <div className="main-canvas"></div>
+          <div className="guide-canvas">
+            <ul className="contextmenu contextmenu-node">
+              <li><a onClick={(e) => {
+                const menu = getParentUntil(e.target, '.contextmenu')
+                const selectNodes = this.editor.getSelectNodes()
+                const nodes = selectNodes.length ? selectNodes : [this.editor.getNodeById(menu.dataset.id)]
 
-              nodes.forEach(node => {
-                node.destroy()
-              })
-            }}>删除节点</a></li>
-          </ul>
+                nodes.forEach(node => {
+                  node.destroy()
+                })
+              }}>删除节点</a></li>
+            </ul>
 
-          <ul className="contextmenu contextmenu-line">
-            <li><a onClick={(e) => {
-              const menu = getParentUntil(e.target, '.contextmenu')
-              const sourceNode = this.editor.getNodeById(menu.dataset.sid)
+            <ul className="contextmenu contextmenu-line">
+              <li><a onClick={(e) => {
+                const menu = getParentUntil(e.target, '.contextmenu')
+                const sourceNode = this.editor.getNodeById(menu.dataset.sid)
 
-              sourceNode.removeConnect(menu.dataset.tid)
-            }}>删除连线</a></li>
-          </ul>
+                sourceNode.removeConnect(menu.dataset.tid)
+              }}>删除连线</a></li>
+            </ul>
 
-          <ul className="contextmenu contextmenu-svg">
-            <li>svg菜单项</li>
-          </ul>
+            <ul className="contextmenu contextmenu-svg">
+              <li>svg菜单项</li>
+            </ul>
+          </div>
         </div>
       </div>
     )

@@ -1,3 +1,6 @@
+@import '~less/variables.less';
+@import '~less/fn.less';
+
 :global {
 
   .hidden {
@@ -29,41 +32,72 @@
     background: #fff;
   }
 
+  .editor-nodes {
+    transform-origin: left top;
+  }
+  .editor-node,
   .editor-node-placeholder {
     position: absolute;
     width: 120px;
     height: 30px;
+    padding: 0 3px;
+    border: 1px solid @main-color;
+    line-height: 28px;
     border-radius: 15px;
-    transform: translate(-50%, -50%);
-    background: rgba(95, 92, 196, 0.2);
+    background: #fff;
+    text-align: center;
     cursor: move;
+    user-select: none;
   }
 
-  .editor-node {
-    fill: rgba(95, 92, 196, 0.6);
+  .editor-node-placeholder {
+    opacity: 0.6;
+    .text-overflow();
+    transform: translate(-50%, -50%);
   }
 
   .editor-node.selected {
-    fill: rgba(95, 92, 196, 1);
+    background: rgba(227, 244, 255, .9);
   }
 
-  // .editor-node-content {
-  //   height: 100%;
-  // }
+  .editor-node-content {
+    .text-overflow();
+  }
 
   .editor-node-entrance,
   .editor-node-export {
-    stroke: #666;
-    stroke-width: 1;
-    fill: #fff;
+    position: absolute;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid #666;
+    background: #fff;
 
     &:hover {
-      stroke: #000;
+      border-color: #000;
     }
   }
 
+  .editor-node-entrance {
+    top: 0;
+    transform: translate(-50%, -50%);
+  }
+
   .editor-node-export {
+    bottom: 0;
+    transform: translate(-50%, 50%);
     cursor: crosshair;
+  }
+
+  .main-canvas,
+  .guide-canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 0;
+    overflow: visible;
   }
 
   /**
